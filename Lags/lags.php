@@ -1,4 +1,7 @@
 <?php
+
+require_once './LagsService.php';
+
 $debug = false;
 $flag = false;
 while (!$flag){

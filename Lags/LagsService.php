@@ -1,5 +1,7 @@
 <?php
 
+require_once './Ordre.php';
+
 class LagsService {
 
     private $listOrdre = array();
@@ -7,7 +9,7 @@ class LagsService {
     // lit le fihier des ordres et calcule le CA
     public function getFichierOrder($fileName){
         try{
-            $lines = fgetcsv($fileName);
+            $lines = file($fileName);
             foreach ($lines as $line){
                 $champs = explode(';', $line);
                 $chp1 = $champs[0];
@@ -54,7 +56,7 @@ class LagsService {
 
         // affiche la liste des ordres
     public function liste(){
-        usort($this->listOrdre,"compare");
+        usort($this->listOrdre,array($this,"compare"));
         echo "LISTE DES ORDRES\n";
         echo "ID DEBUT DUREE PRIX\n";
         echo "------------------------------\n";
@@ -66,7 +68,7 @@ class LagsService {
     }
 
     public function afficherOrdre(Ordre $ordre){
-            echo ''. $ordre->getId() . $ordre->getDebut() . $ordre->getDuree() . $ordre->prix();
+            echo ''. $ordre->getId() . ';' . $ordre->getDebut()  . ';' . $ordre->getDuree() . ';'. $ordre->prix() . PHP_EOL;
     }
     // Ajoute un ordre; le CA est recalculé en conséquence
     public function ajouterOrdre(){
@@ -80,7 +82,7 @@ class LagsService {
         $chp4 = doubleval($champs[3]);
         $ordre = new Ordre($chp1, $chp2, $champ3, $chp4);
         $this->listOrdre[] = $ordre;
-        $this->writeOrdres("ordres.csv");
+        $this->writeOrdres("ORDRES.CSV");
     }
     // MAJ du fichier
     public function suppression(){
@@ -88,35 +90,34 @@ class LagsService {
         echo "ID:\r\n";
         $id = trim(strtoupper(fgets(STDIN)));
         $offset = -1;
-        for ($i=0; $i<sizeof($this->listOrdre);$i++){
+        $newList = [];
+        for ($i=0; $i<count($this->listOrdre);$i++){
             $o = $this->listOrdre[$i];
-            if ($o->getId() === $id){
-                $offset = $i;
+            if ($o->getId() !== $id){
+                $newList[] = $this->listOrdre[$i];
             }
         }
-        if ($offset > -1) {
-            $this->listOrdre = array_splice($this->listOrdre, $offset);
-            $this->writeOrdres("ORDRES.CSV");
-        }
+        $this->listOrdre = $newList;
+        $this->writeOrdres("ORDRES.CSV");
     }
 
         private function ca($ordres, $debug)
         {
             // si aucun ordre, job done, TROLOLOLO..
-            if (sizeof($ordres.size()) === 0)
-                return 0.0;
+            if (count($ordres) === 0)
+                return 0;
             $order = $ordres[0];
             // attention ne marche pas pour les ordres qui depassent la fin de l'année
             // voir ticket PLAF nO 4807
             $liste = array();
-            for ($i=0; $i<sizeof($this->listOrdre);$i++){
+            for ($i=0; $i<count($this->listOrdre);$i++){
                 $o = $this->listOrdre[$i];
                 if ($o->getDebut()>=$order->getDebut() + $order->getDuree()) {
                     $liste[] = $o;
                 }
             }
             $liste2 = array();
-            for($i=1; $i<sizeof($ordres); $i++) {
+            for($i=1; $i<count($ordres); $i++) {
                 $liste2[] = $ordres[$i];
             }
             $ca = $order->prix()+ $this->ca($liste, $debug);
@@ -136,7 +137,7 @@ class LagsService {
         public function calculerLeCA($debug)
         {
             echo ("CALCUL CA..\r\n");
-            usort($this->listOrdre,"compare");
+            usort($this->listOrdre,array($this,"compare"));
             $ca = $this->ca($this->listOrdre, $debug);
             echo "CA: ".number_format($ca,2)."\r\n";
 }
