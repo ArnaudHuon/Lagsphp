@@ -1,5 +1,6 @@
 <?php
 
+namespace Octo\Lags;
 
 class Ordre{
 

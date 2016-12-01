@@ -1,6 +1,6 @@
 <?php
 
-require_once './Ordre.php';
+namespace Octo\Lags;
 
 class LagsService {
 
